@@ -12,12 +12,14 @@ class Ipcheck
       unless url.to_s.empty? #ignore blank lines
         domain = url.sub(/\Ahttps?:\/\//,"") #strip the scheme and any trailing bits
         domain = domain.sub(/(?=\/).+/,"")
-        begin
-        ip = Resolv.new.getaddress(url.chomp()) #try to get the ip
-        rescue Resolv::ResolvError #don't break on error
-          ip = "Error, unable to resolve hostname."
+        unless urls.has_key? "#{domain}" #ignore duplicate domains
+         begin
+          ip = Resolv.new.getaddress(domain.chomp()) #try to get the ip
+          rescue Resolv::ResolvError #don't break on error
+            ip = "Error, unable to resolve hostname."
+          end
+          urls[domain] = ip #set the domain and ip pair
         end
-        urls[domain] = ip #set the domain and ip pair
       end
     end
     puts "Sorting Results..."
@@ -34,4 +36,5 @@ class Ipcheck
 
 end
 
+File.open('/tmp/file', 'w') {}
 Ipcheck.check
