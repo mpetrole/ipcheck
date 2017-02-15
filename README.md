@@ -5,3 +5,6 @@ run ipcheck.rb, then receive output in output.txt. It will strip out the domains
 so it is not necessary to put only domains. It will also ignore blank lines.
 
 Requires at least Ruby 2.x
+
+Need Ruby? Linux - it's probably available as a package in your package manager. Windows - use this https://rubyinstaller.org/.
+Mac - I recommend RVM https://rvm.io/rvm/install
