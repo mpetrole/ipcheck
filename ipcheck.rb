@@ -1,7 +1,6 @@
 require 'resolv'
 require 'net/http'
 require 'uri'
-require 'open-uri'
 
 class Ipcheck
 
@@ -21,6 +20,8 @@ def self.url_valid?(new_string)
     false # false if can't find the server
   rescue OpenSSL::SSL::SSLError
     false #ssl can't connect
+  rescue Net::OpenTimeout
+	false #connection timed out, likely target is offline
   end
 end
 
