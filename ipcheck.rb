@@ -3,23 +3,36 @@ require 'net/http'
 require 'uri'
 
 class Ipcheck
-  
+
   def initialize()
   end
   
-def self.url_exist?(url_string)
+def self.url_valid?(new_string)
   begin
-    url = URI.parse(URI.encode(url_string))
+    url = URI.parse(URI.encode(new_string))
     req = Net::HTTP.new(url.host, url.port)
     req.use_ssl = (url.scheme == 'https')
     req.verify_mode = OpenSSL::SSL::VERIFY_NONE #I know this is normally bad, but we just want to connect, we don't care about the security of the connection. Please don't hate me!
     path = url.path if ! url.path.empty? #use a path if available
     res = req.request_head(path || '/')
-    res.code != "404" # false if returns 404 - not found
+    res.code != "404" || res.code != "301" || res.code != "302" # false if returns 404 or redirects, since redirects can't be IP phish
   rescue Errno::ENOENT
     false # false if can't find the server
   rescue OpenSSL::SSL::SSLError
     false #ssl can't connect
+  rescue Net::OpenTimeout
+	false #connection timed out, likely target is offline
+  end
+end
+
+def self.url_body(n)
+  
+  n = URI.parse(n)
+  Net::HTTP.start(n.host, n.port,
+  :use_ssl => n.scheme == 'https', :verify_mode => OpenSSL::SSL::VERIFY_NONE) do |http|
+  request = Net::HTTP::Get.new(n.request_uri)
+  response = http.request(request)
+  response.body
   end
 end
   
@@ -43,15 +56,23 @@ end
           #check to see if the urls will work with the ip subbed for the url
           if ip != "Error, unable to resolve hostname." #ignore ones that are offline or otherwise invalid
             new_url = url.sub("#{domain}","#{ip}")
-            ip_phish = url_exist?("#{new_url}")
-            ipPhish[url] = ip_phish
+            ip_phish = url_valid?("#{new_url}")
+ 			if ip_phish		
+   			  o = url_body("#{url}")
+			  n = url_body("#{new_url}")
+			  if o == n && o != false #if the original can't be found then it's kind of a moot point...
+                ipPhish[url] = ip_phish
+			  else
+			    ipPhish[url] = "Error, mismatch in response bodies."
+			  end
+			end
           else 
             ipPhish[url] = "Error, unable to resolve hostname."
           end
         end
       end
     end
-    puts "Sorting Results..."
+    puts "Building Output..."
   ipPhish.each { |uri, ipphish| #sorted_ip
   File.open("output.txt", 'a') do |result| #put the sorted url-possible ip phish pairs into the output file
       result.puts "#{uri} Potential IP phish? #{ipphish}"
