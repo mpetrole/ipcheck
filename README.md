@@ -1,6 +1,6 @@
 IPCheck
 
-Gets and sorts IPs for given domains. Put the domains/URIs in the input.txt, and
+Gets the IP addresses for a list of URLs and then replaces the domain with the IP and compares the two to see if the result is a compromised server. Put the domains/URIs in the input.txt, and
 run ipcheck.rb, then receive output in output.txt. It will strip out the domains from URIs,
 so it is not necessary to put only domains. It will also ignore blank lines and extra text AFTER the url.
 
